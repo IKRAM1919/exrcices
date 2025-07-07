@@ -90,10 +90,9 @@ conditions = [
 choix =['Jeune & Nouveau','Jeune & Expérimenté','Senior & Nouveau','Senior & Expérimenté']
 df['classement'] = np.select(conditions, choix, default='Inconnu')
 print(df)
-#print('Calculer la différence entre le salaire de chaque employé et le salaire moyen de son département.')
+print('Calculer la différence entre le salaire de chaque employé et le salaire moyen de son département.')
 #merge() and transform(), map(salaire_moyen_dept) : remplace chaque département par sa moyenne correspondante
 salaire_moyen_dept = df.groupby('Department')['Salary'].mean()
 df['salaire_moyen_dept'] = df['Department'].map(salaire_moyen_dept)
 df['ecart_salaire'] = df['Salary'] - df['salaire_moyen_dept']
-
 print(df)
