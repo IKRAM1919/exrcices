@@ -1,0 +1,99 @@
+print("Charger le fichier employees2.csv dans un DataFrame Pandas.")
+df=pd.read_csv('/content/employees2 (1).csv')
+print(df)
+print("Afficher les premières lignes du DataFrame avec head()")
+print(df.head())
+print("Vérifier les types de données de chaque colonne.")
+print(df.dtypes)
+print(df.info())
+print("Identifier les valeurs manquantes par colonne.")
+print(df.isnull().sum())
+print(df.isna().sum()) # isna() alias of isnall()
+#Partie 2 : Nettoyage des données
+print("Remplacer les valeurs manquantes dans la colonne Age par la médiane de cette colonne")
+df['Age']=df['Age'].fillna(df['Age'].median())
+print(df)
+print("---------------------------------------------------")
+df['salary']=df['Salary'].fillna(df.groupby('Department')['Salary'].transform('median'))#On utilise la médiane pour éviter que des valeurs anormales faussent les remplacements.
+                                                                                        #Elle protège le modèle ou analyse contre les données bizarres ou extrêmes.                                                                                  #Elle protège le modèle ou analyse contre les données bizarres ou extrêmes.
+print(df)
+print("Remplacer les valeurs 'Yes'/'No' dans Remote par 'Oui'/'Non'.")
+df['Remote'] =df['Remote'].replace({'Yes':'Oui','No':'Non'})
+print(df)
+print("Remplacer les valeurs manquantes dans la colonne Age par la médiane de cette colonne")
+df['Age']=df['Age'].fillna(df['Age'].median())
+print(df)
+print("Remplir les valeurs manquantes dans Salary en utilisant la moyenne par département")
+df['Salary'] = df['Salary'].fillna(df.groupby('Department')['Salary'].median())#transform() pour remplir les NaN.
+print(df)
+print("---------------------------------------------------")
+df['salary']=df['Salary'].fillna(df.groupby('Department')['Salary'].transform('median'))
+print(df)
+print("Remplacer les valeurs 'Yes'/'No' dans Remote par 'Oui'/'Non'.")
+df['Remote'] =df['Remote'].replace({'Yes':'Oui','No':'Non'})
+print(df)
+print('Créer une nouvelle colonne Ancienneté_Catégorie qui classe les années d’expérience en :')
+def categorie(annee):
+  conditions = [
+      (annee <= 2),
+      (annee > 2) & (annee <= 5),
+      (annee > 5) & (annee <= 10),
+      (annee > 10)
+  ]
+  choix = ['Junior', 'Intermediaire', 'Senior', 'Expert']
+  return np.select(conditions, choix, default='Inconnu')
+
+df['Anciennete_Categorie'] = df['Years_Experience'].apply(categorie)
+print(df)
+print('methode 2')
+#methode2: on utilise np.where est une excellente idée pour améliorer la performance et réduire la complexité en évitant .apply(), qui est une boucle implicite sur chaque ligne.
+df['Anciennete_Categorie'] = np.where(df['Years_Experience'] <= 2, 'Junior',
+                             np.where(df['Years_Experience'] <= 5, 'Intermediaire',
+                             np.where(df['Years_Experience'] <= 10, 'Senior',
+                             np.where(df['Years_Experience'] > 10, 'Expert', 'Inconnu'))))
+print(df)
+print('Calculer le salaire moyen global.')
+salaire_moyen = df['Salary'].mean()
+print("Le salaire moyen global est :", salaire_moyen)
+print("Trouver l’employé(e) avec le salaire le plus élevé.")
+employee_max =df[df['salary']==df['salary'].max()]
+print(employee_max)
+print("Calculer le salaire moyen par département.")
+salaire_moyen_dept = df.groupby('Department')['salary'].mean()
+print(salaire_moyen_dept)
+print("Calculer la moyenne et la médiane des salaires par groupe d’ancienneté.")
+moyenne_salaire = df.groupby('Anciennete_Categorie')['salary'].mean()
+mediane_salaire = df.groupby('Anciennete_Categorie')['salary'].median()
+print(moyenne_salaire)
+print(mediane_salaire)
+print('Compter combien d’employés travaillent en télétravail (Remote) par département.')
+remote_employees_by_dept = df[df['Remote'] == 'Oui'].groupby('Department').size()
+print(remote_employees_by_dept)
+print('Créer un tableau croisé dynamique montrant le salaire moyen par département et par télétravail .')
+pivot_table = df.pivot_table(index='Department', columns='Remote', values='Salary', aggfunc='mean')
+print(pivot_table)
+print(' Créer un autre tableau croisé dynamique montrant le nombre moyen d’années d’expérience par groupe d’âge et par département .')
+df['Age'] = df['Age'].astype(int)
+pivot_table2 = df.pivot_table(index='Age', columns='Department', values='Years_Experience', aggfunc='mean')
+print(pivot_table2)
+print('Utiliser np.where() pour créer une colonne Performance :')
+df['performance'] = np.where(df['Salary'] < 60000, 'Bon',
+                             np.where((df['Salary'] < 80000) & (df['salary'] >= 60000), 'Moyen',
+                             np.where(df['Salary'] >= 80000, 'Haut', 'Inconnu')))
+print(df)
+print('Utiliser np.select() pour classer les employés selon leur âge et leur ancienneté :')
+conditions = [
+    (df['Age'] <= 30) & (df['Years_Experience'] <= 2),
+    (df['Age'] <= 30) & (df['Years_Experience'] > 2),
+    (df['Age'] > 30) & (df['Years_Experience'] <= 2),
+    (df['Age'] > 30) & (df['Years_Experience'] > 2)]
+choix =['Jeune & Nouveau','Jeune & Expérimenté','Senior & Nouveau','Senior & Expérimenté']
+df['classement'] = np.select(conditions, choix, default='Inconnu')
+print(df)
+#print('Calculer la différence entre le salaire de chaque employé et le salaire moyen de son département.')
+#merge() and transform(), map(salaire_moyen_dept) : remplace chaque département par sa moyenne correspondante
+salaire_moyen_dept = df.groupby('Department')['Salary'].mean()
+df['salaire_moyen_dept'] = df['Department'].map(salaire_moyen_dept)
+df['ecart_salaire'] = df['Salary'] - df['salaire_moyen_dept']
+
+print(df)
